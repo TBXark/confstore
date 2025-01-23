@@ -111,6 +111,9 @@ func (g *ConfigProviderGroup) IsValid(path string) bool {
 
 func (g *ConfigProviderGroup) Load(path string, value any) error {
 	for _, provider := range g.providers {
+		if !provider.IsValid(path) {
+			continue
+		}
 		err := provider.Load(path, value)
 		if err == nil {
 			return nil
@@ -121,6 +124,9 @@ func (g *ConfigProviderGroup) Load(path string, value any) error {
 
 func (g *ConfigProviderGroup) Save(path string, value any) error {
 	for _, provider := range g.providers {
+		if !provider.IsValid(path) {
+			continue
+		}
 		err := provider.Save(path, value)
 		if err == nil {
 			return nil
