@@ -1,9 +1,9 @@
 package confstore
 
 func Default() Provider {
-	return NewConfigProviderGroup(
-		NewHttpConfigProvider(JsonCodec{}),
-		NewLocalConfigProvider(JsonCodec{}),
+	return NewProviderGroup(
+		NewHttpProvider(JsonCodec{}),
+		NewLocalProvider(JsonCodec{}),
 	)
 }
 

@@ -20,7 +20,7 @@ type LocalProvider struct {
 	codec Codec
 }
 
-func NewLocalConfigProvider(codec Codec) *LocalProvider {
+func NewLocalProvider(codec Codec) *LocalProvider {
 	return &LocalProvider{codec: codec}
 }
 
@@ -54,7 +54,7 @@ type HttpProvider struct {
 	codec Codec
 }
 
-func NewHttpConfigProvider(codec Codec) *HttpProvider {
+func NewHttpProvider(codec Codec) *HttpProvider {
 	return &HttpProvider{codec: codec}
 }
 
@@ -92,15 +92,15 @@ func (p *HttpProvider) Save(path string, value any) error {
 	return nil
 }
 
-type ConfigProviderGroup struct {
+type ProviderGroup struct {
 	providers []Provider
 }
 
-func NewConfigProviderGroup(providers ...Provider) *ConfigProviderGroup {
-	return &ConfigProviderGroup{providers: providers}
+func NewProviderGroup(providers ...Provider) *ProviderGroup {
+	return &ProviderGroup{providers: providers}
 }
 
-func (g *ConfigProviderGroup) IsValid(path string) bool {
+func (g *ProviderGroup) IsValid(path string) bool {
 	for _, provider := range g.providers {
 		if provider.IsValid(path) {
 			return true
@@ -109,7 +109,7 @@ func (g *ConfigProviderGroup) IsValid(path string) bool {
 	return false
 }
 
-func (g *ConfigProviderGroup) Load(path string, value any) error {
+func (g *ProviderGroup) Load(path string, value any) error {
 	for _, provider := range g.providers {
 		if !provider.IsValid(path) {
 			continue
@@ -122,7 +122,7 @@ func (g *ConfigProviderGroup) Load(path string, value any) error {
 	return fmt.Errorf("failed to load config from %s", path)
 }
 
-func (g *ConfigProviderGroup) Save(path string, value any) error {
+func (g *ProviderGroup) Save(path string, value any) error {
 	for _, provider := range g.providers {
 		if !provider.IsValid(path) {
 			continue
