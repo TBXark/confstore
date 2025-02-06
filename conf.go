@@ -7,6 +7,13 @@ func Default() Provider {
 	)
 }
 
+func New(codec Codec) Provider {
+	return NewProviderGroup(
+		NewHttpProvider(codec),
+		NewLocalProvider(codec),
+	)
+}
+
 func Load[T any](path string) (*T, error) {
 	config := new(T)
 	err := Default().Load(path, config)
