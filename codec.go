@@ -13,7 +13,7 @@ type Codec interface {
 type JsonCodec struct{}
 
 func (JsonCodec) Marshal(value any) ([]byte, error) {
-	return json.Marshal(value)
+	return json.MarshalIndent(value, "", "  ")
 }
 
 func (JsonCodec) Unmarshal(data []byte, value any) error {
