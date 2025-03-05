@@ -5,15 +5,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 type Provider interface {
 	IsValid(path string) bool
 	Load(path string, value any) error
 	Save(path string, value any) error
+}
+
+func isRemoteURL(path string) bool {
+	u, err := url.Parse(path)
+	if err != nil {
+		return false
+	}
+	return u.Scheme != "" && u.Scheme != "file"
+}
+
+func isLocalPath(path string) bool {
+	return !isRemoteURL(path)
 }
 
 type LocalProvider struct {
@@ -25,7 +36,7 @@ func NewLocalProvider(codec Codec) *LocalProvider {
 }
 
 func (p *LocalProvider) IsValid(path string) bool {
-	return filepath.IsLocal(path)
+	return isLocalPath(path)
 }
 
 func (p *LocalProvider) Load(path string, value any) error {
@@ -59,7 +70,11 @@ func NewHttpProvider(codec Codec) *HttpProvider {
 }
 
 func (p *HttpProvider) IsValid(path string) bool {
-	return strings.HasPrefix(path, "http")
+	u, err := url.Parse(path)
+	if err != nil {
+		return false
+	}
+	return u.Scheme == "http" || u.Scheme == "https"
 }
 
 func (p *HttpProvider) Load(path string, value any) error {
