@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Provider interface {
@@ -20,11 +22,19 @@ func isRemoteURL(path string) bool {
 	if err != nil {
 		return false
 	}
-	return u.Scheme != "" && u.Scheme != "file"
+	return u.Scheme == "http" || u.Scheme == "https"
 }
 
 func isLocalPath(path string) bool {
-	return !isRemoteURL(path)
+	cleanPath := filepath.Clean(path)
+	if strings.Contains(path, "://") {
+		return false
+	}
+	volName := filepath.VolumeName(cleanPath)
+	if volName != "" || filepath.IsAbs(cleanPath) {
+		return true
+	}
+	return true
 }
 
 type LocalProvider struct {
@@ -70,11 +80,7 @@ func NewHttpProvider(codec Codec) *HttpProvider {
 }
 
 func (p *HttpProvider) IsValid(path string) bool {
-	u, err := url.Parse(path)
-	if err != nil {
-		return false
-	}
-	return u.Scheme == "http" || u.Scheme == "https"
+	return isRemoteURL(path)
 }
 
 func (p *HttpProvider) Load(path string, value any) error {
