@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type Provider interface {
@@ -26,13 +25,12 @@ func isRemoteURL(path string) bool {
 }
 
 func isLocalPath(path string) bool {
-	cleanPath := filepath.Clean(path)
-	if strings.Contains(path, "://") {
-		return false
-	}
-	volName := filepath.VolumeName(cleanPath)
-	if volName != "" || filepath.IsAbs(cleanPath) {
+	path = filepath.Clean(path)
+	if filepath.IsAbs(path) {
 		return true
+	}
+	if u, err := url.Parse(path); err == nil && u.Scheme != "" {
+		return u.Scheme == "file"
 	}
 	return true
 }
