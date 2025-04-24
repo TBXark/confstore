@@ -25,7 +25,6 @@ func isRemoteURL(path string) bool {
 }
 
 func isLocalPath(path string) bool {
-	path = filepath.Clean(path)
 	if filepath.IsAbs(path) {
 		return true
 	}
