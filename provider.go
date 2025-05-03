@@ -63,7 +63,9 @@ func (p *LocalProvider) Save(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	_, err = file.Write(data)
 	return err
 }
@@ -85,7 +87,9 @@ func (p *HttpProvider) Load(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -106,7 +110,9 @@ func (p *HttpProvider) Save(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	return nil
 }
 
@@ -133,11 +139,12 @@ func (g *ProviderGroup) Load(path string, value any) error {
 			continue
 		}
 		err := provider.Load(path, value)
-		if err == nil {
-			return nil
+		if err != nil {
+			return err
 		}
+		return nil
 	}
-	return fmt.Errorf("failed to load config from %s", path)
+	return fmt.Errorf("provider %s not found", path)
 }
 
 func (g *ProviderGroup) Save(path string, value any) error {
@@ -146,9 +153,10 @@ func (g *ProviderGroup) Save(path string, value any) error {
 			continue
 		}
 		err := provider.Save(path, value)
-		if err == nil {
-			return nil
+		if err != nil {
+			return err
 		}
+		return nil
 	}
-	return fmt.Errorf("failed to save config to %s", path)
+	return fmt.Errorf("provider %s not found", path)
 }

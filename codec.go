@@ -20,15 +20,15 @@ func (JsonCodec) Unmarshal(data []byte, value any) error {
 	return json.Unmarshal(data, value)
 }
 
-type CodecGroup struct {
+type FallbackCodecGroup struct {
 	codecs []Codec
 }
 
-func NewCodecGroup(codecs ...Codec) *CodecGroup {
-	return &CodecGroup{codecs: codecs}
+func NewCodecGroup(codecs ...Codec) *FallbackCodecGroup {
+	return &FallbackCodecGroup{codecs: codecs}
 }
 
-func (m *CodecGroup) Marshal(value any) ([]byte, error) {
+func (m *FallbackCodecGroup) Marshal(value any) ([]byte, error) {
 	for _, codec := range m.codecs {
 		data, err := codec.Marshal(value)
 		if err == nil {
@@ -38,7 +38,7 @@ func (m *CodecGroup) Marshal(value any) ([]byte, error) {
 	return nil, fmt.Errorf("failed to marshal value")
 }
 
-func (m *CodecGroup) Unmarshal(data []byte, value any) error {
+func (m *FallbackCodecGroup) Unmarshal(data []byte, value any) error {
 	for _, codec := range m.codecs {
 		err := codec.Unmarshal(data, value)
 		if err == nil {
