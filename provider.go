@@ -71,11 +71,31 @@ func (p *LocalProvider) Save(path string, value any) error {
 }
 
 type HttpProvider struct {
-	codec Codec
+	codec  Codec
+	client *http.Client
 }
 
-func NewHttpProvider(codec Codec) *HttpProvider {
-	return &HttpProvider{codec: codec}
+// HttpProviderOption is a functional option for configuring HttpProvider.
+type HttpProviderOption func(*HttpProvider)
+
+// WithHTTPClient sets a custom http.Client for HttpProvider.
+func WithHTTPClient(client *http.Client) HttpProviderOption {
+	return func(p *HttpProvider) {
+		if client != nil {
+			p.client = client
+		}
+	}
+}
+
+func NewHttpProvider(codec Codec, opts ...HttpProviderOption) *HttpProvider {
+	provider := &HttpProvider{
+		codec:  codec,
+		client: http.DefaultClient,
+	}
+	for _, opt := range opts {
+		opt(provider)
+	}
+	return provider
 }
 
 func (p *HttpProvider) IsValid(path string) bool {
@@ -83,7 +103,7 @@ func (p *HttpProvider) IsValid(path string) bool {
 }
 
 func (p *HttpProvider) Load(path string, value any) error {
-	resp, err := http.Get(path)
+	resp, err := p.client.Get(path)
 	if err != nil {
 		return err
 	}
@@ -106,7 +126,7 @@ func (p *HttpProvider) Save(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return err
 	}
