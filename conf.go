@@ -32,14 +32,12 @@ func defaultProviderWithOpts(optList ...Option) Provider {
 	for _, opt := range optList {
 		opt(o)
 	}
+	httpProviderOpts := make([]HttpProviderOption, 0, 1)
+	if o.httpClient != nil {
+		httpProviderOpts = append(httpProviderOpts, WithHTTPClient(o.httpClient))
+	}
 	return NewProviderGroup(
-		NewHttpProvider(JsonCodec{},
-			func(p *HttpProvider) {
-				if o.httpClient != nil {
-					WithHTTPClient(o.httpClient)(p)
-				}
-			},
-		),
+		NewHttpProvider(JsonCodec{}, httpProviderOpts...),
 		NewLocalProvider(JsonCodec{}),
 	)
 }
