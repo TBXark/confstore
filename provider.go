@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 type Provider interface {
@@ -21,10 +23,14 @@ func isRemoteURL(path string) bool {
 	if err != nil {
 		return false
 	}
-	return u.Scheme == "http" || u.Scheme == "https"
+	s := strings.ToLower(u.Scheme)
+	return (s == "http" || s == "https") && u.Host != ""
 }
 
 func isLocalPath(path string) bool {
+	if path == "" {
+		return false
+	}
 	if filepath.IsAbs(path) {
 		return true
 	}
@@ -47,6 +53,9 @@ func (p *LocalProvider) IsValid(path string) bool {
 }
 
 func (p *LocalProvider) Load(path string, value any) error {
+	if u, err := url.Parse(path); err == nil && u.Scheme == "file" {
+		path = u.Path
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -55,9 +64,17 @@ func (p *LocalProvider) Load(path string, value any) error {
 }
 
 func (p *LocalProvider) Save(path string, value any) error {
+	if u, err := url.Parse(path); err == nil && u.Scheme == "file" {
+		path = u.Path
+	}
 	data, err := p.codec.Marshal(value)
 	if err != nil {
 		return err
+	}
+	if dir := filepath.Dir(path); dir != "." {
+		if mkErr := os.MkdirAll(dir, 0o755); mkErr != nil {
+			return mkErr
+		}
 	}
 	file, err := os.Create(path)
 	if err != nil {
@@ -75,10 +92,8 @@ type HttpProvider struct {
 	client *http.Client
 }
 
-// HttpProviderOption is a functional option for configuring HttpProvider.
 type HttpProviderOption func(*HttpProvider)
 
-// WithHTTPClient sets a custom http.Client for HttpProvider.
 func WithHTTPClient(client *http.Client) HttpProviderOption {
 	return func(p *HttpProvider) {
 		if client != nil {
@@ -87,13 +102,16 @@ func WithHTTPClient(client *http.Client) HttpProviderOption {
 	}
 }
 
-func NewHttpProvider(codec Codec, opts ...HttpProviderOption) *HttpProvider {
+func NewHttpProvider(codec Codec, options ...HttpProviderOption) *HttpProvider {
 	provider := &HttpProvider{
 		codec:  codec,
-		client: http.DefaultClient,
+		client: nil,
 	}
-	for _, opt := range opts {
+	for _, opt := range options {
 		opt(provider)
+	}
+	if provider.client == nil {
+		provider.client = &http.Client{Timeout: 30 * time.Second}
 	}
 	return provider
 }
@@ -114,6 +132,9 @@ func (p *HttpProvider) Load(path string, value any) error {
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("http %d: %s", resp.StatusCode, string(data))
+	}
 	return p.codec.Unmarshal(data, value)
 }
 
@@ -126,6 +147,7 @@ func (p *HttpProvider) Save(path string, value any) error {
 	if err != nil {
 		return err
 	}
+	//req.Header.Set("Content-Type", "application/binary")
 	resp, err := p.client.Do(req)
 	if err != nil {
 		return err
@@ -133,6 +155,10 @@ func (p *HttpProvider) Save(path string, value any) error {
 	defer func() {
 		_ = resp.Body.Close()
 	}()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("http %d: %s", resp.StatusCode, string(body))
+	}
 	return nil
 }
 
