@@ -1,0 +1,6 @@
+.PHONY: fmt
+fmt:
+	go test ./...
+	go fmt ./...
+	golangci-lint run --fix
+	golangci-lint fmt

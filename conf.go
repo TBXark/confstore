@@ -5,6 +5,7 @@ import "net/http"
 type options struct {
 	httpProviderOptions []HttpProviderOption
 }
+
 type Option func(*options)
 
 func WithHTTPClientOption(client *http.Client) Option {

@@ -1,0 +1,14 @@
+version: "2"
+severity:
+  default: error
+  rules:
+    - linters:
+        - errcheck
+        - unused
+      severity: info
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
