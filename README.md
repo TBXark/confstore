@@ -1,5 +1,8 @@
 # confstore
 
+> [!WARNING]
+> This project has been transferred to the [`go-sphere/sphere`](https://github.com/go-sphere/confstore) repository for maintenance.
+
 Tiny, generic configuration load/save library for Go. Works with local files and HTTP(S), with a simple provider/codec interface so you can extend it as needed.
 
 ## Features
