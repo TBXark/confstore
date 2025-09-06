@@ -18,7 +18,7 @@ Tiny, generic configuration load/save library for Go. Works with local files and
 import (
     "net/http"
     "time"
-    confstore "github.com/TBXark/confstore"
+    "github.com/TBXark/confstore"
 )
 
 type App struct {
